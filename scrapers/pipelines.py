@@ -16,6 +16,9 @@ class StoragePipeline:
         self.session.close()
 
     def process_item(self, item, spider):
+        # Extract the product details from external api
+        item = spider.get_product_details(item)
+
         # Check if the Product already exists
         product = (
             self.session.query(Product)
