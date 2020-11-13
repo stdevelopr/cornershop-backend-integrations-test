@@ -16,7 +16,6 @@ class StoragePipeline:
         self.session.close()
 
     def process_item(self, item, spider):
-
         # Check if the Product already exists
         product = (
             self.session.query(Product)
@@ -30,6 +29,9 @@ class StoragePipeline:
         product.barcodes = item["barcodes"]
         product.brand = item["brand"]
         product.name = item["name"]
+        product.package = item["package"]
+        product.category = item["category"]
+        product.url = item["url"]
         product.description = item["description"]
         product.image_url = item["image_url"]
 
