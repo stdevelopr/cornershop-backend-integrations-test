@@ -27,8 +27,8 @@ def process_csv_files():
     except Exception as e:
         logging.error(f"Error reading file, {e}")
 
-    process_products_file(products_df)
-    logging.info(f"PRODUCTS | Done")
+    # process_products_file(products_df)
+    # logging.info(f"PRODUCTS | Done")
 
     # create a map between sku and id for each product
     products = session.query(Product).with_entities(Product.id, Product.sku)
@@ -80,30 +80,31 @@ def process_stock(prices_stock_df: pd.DataFrame, sku_id_map: dict):
         prices_stock_df = prices_stock_df.dropna(how='any',axis=0)
     prices_stock = []
     for index, row in prices_stock_df.iterrows():
-        try:
-            product_id = sku_id_map[row["SKU"]]
-        except Exception as e:
-            logging.error(f"PRICE-STOCK | could not map product id and sku: {e}")
-
-        try:
-            branch_product = BranchProduct(product_id= product_id)
-            branch_product.branch = row["BRANCH"]
-            branch_product.stock = row["STOCK"]
-            branch_product.price = row["PRICE"]
-            prices_stock.append(branch_product)
-        except Exception as e:
-            logging.error(f"PRICE-STOCK | error instanciating BranchProduct: {e}")
-
-        bulk_size = len(prices_stock)
-        if bulk_size == BATCH_SIZE:
+        if (row["BRANCH"] == 'MM' or row["BRANCH"] == 'RHSM') and row["STOCK"] > 0:
             try:
-                session.bulk_save_objects(prices_stock)
-                session.commit()
-                logging.info(f"Inserted {bulk_size} rows to PRICES-STOCK table")
-                prices_stock = []
+                product_id = sku_id_map[row["SKU"]]
             except Exception as e:
-                logging.exception(f"PRICES-STOCK error. {e}")
-                session.rollback()
+                logging.error(f"PRICE-STOCK | could not map product id and sku: {e}")
+
+            try:
+                branch_product = BranchProduct(product_id= product_id)
+                branch_product.branch = row["BRANCH"]
+                branch_product.stock = row["STOCK"]
+                branch_product.price = row["PRICE"]
+                prices_stock.append(branch_product)
+            except Exception as e:
+                logging.error(f"PRICE-STOCK | error instanciating BranchProduct: {e}")
+
+            bulk_size = len(prices_stock)
+            if bulk_size == BATCH_SIZE:
+                try:
+                    session.bulk_save_objects(prices_stock)
+                    session.commit()
+                    logging.info(f"Inserted {bulk_size} rows to PRICES-STOCK table")
+                    prices_stock = []
+                except Exception as e:
+                    logging.exception(f"PRICES-STOCK error. {e}")
+                    session.rollback()
 
 
 def cleanhtml(raw_html):
