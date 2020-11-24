@@ -27,8 +27,8 @@ def process_csv_files():
     except Exception as e:
         logging.error(f"Error reading file, {e}")
 
-    # process_products_file(products_df)
-    # logging.info(f"PRODUCTS | Done")
+    process_products_file(products_df)
+    logging.info(f"PRODUCTS | Done")
 
     # create a map between sku and id for each product
     products = session.query(Product).with_entities(Product.id, Product.sku)
